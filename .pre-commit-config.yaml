@@ -1,0 +1,39 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: check-yaml
+    -   id: check-added-large-files
+- repo: local
+  hooks:
+    - id: syntax format src
+      name: crystal format src
+      entry: bash -c 'crystal tool format src'
+      language: system
+      types: [file,non-executable,text]
+      files: \.(cr)$
+      pass_filenames: false
+    - id: syntax format spec
+      name: crystal format spec
+      entry: bash -c 'crystal tool format spec'
+      language: system
+      types: [file,non-executable,text]
+      files: \.(cr)$
+      pass_filenames: false
+    - id: tests
+      name: crystal test on spec
+      entry: bash -c 'crystal spec'
+      language: system
+      types: [file,non-executable,text]
+      files: \.(cr)$
+      pass_filenames: false
+    - id: linter
+      name: crystal ameba
+      entry: bash -c 'bin/ameba'
+      language: system
+      types: [file,non-executable,text]
+      files: \.(cr)$
+      pass_filenames: true
