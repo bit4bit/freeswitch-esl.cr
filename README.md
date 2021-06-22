@@ -1,6 +1,7 @@
 # freeswitch-esl
 
-TODO: Write a description here
+Freeswitch Event Socket library for [Crystal language](https://github.com/crystal-lang/crystal).
+
 
 ## Installation
 
@@ -14,13 +15,30 @@ TODO: Write a description here
 
 2. Run `shards install`
 
-## Usage
+## Usage Inbound
 
 ```crystal
 require "freeswitch-esl"
-```
 
-TODO: Write usage instructions here
+conn = Freeswitch::ESL::Inbound.new("172.29.0.9", 8021, "ClueCon")
+if !conn.connect(1.second)
+  puts "failed to login"
+end
+
+puts conn.api "uptime""
+
+events = conn.events
+
+spawn do
+  loop do
+    event = events.receive
+    puts event.headers
+    puts event.message
+  end
+end
+
+sleep
+```
 
 ## Development
 

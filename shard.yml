@@ -4,6 +4,15 @@ version: 0.1.0
 authors:
   - Jovany Leandro G.C <bit4bit@riseup.net>
 
+targets:
+  fs_cli.cr:
+    main: samples/fs_cli.cr
+
 crystal: 1.0.0
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+    version: ~> 0.13.0
 
 license: MIT

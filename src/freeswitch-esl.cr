@@ -1,6 +1,6 @@
-# TODO: Write documentation for `Freeswitch::Esl`
-module Freeswitch::Esl
-  VERSION = "0.1.0"
+require "./connection"
+require "./inbound"
 
-  # TODO: Put your code here
+module Freeswitch::ESL
+  VERSION = "0.1.0"
 end
