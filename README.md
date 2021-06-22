@@ -25,7 +25,7 @@ if !conn.connect(1.second)
   puts "failed to login"
 end
 
-puts conn.api "uptime""
+puts conn.api "uptime"
 
 events = conn.events
 
