@@ -37,18 +37,17 @@ module Freeswitch::ESL
         return false
       end
 
-      if @user.nil?
-        conn.send("auth #{@pass}")
-      else
-        conn.send("userauth #{@user}:#{@pass}")
-      end
+      begin
+        resp = if @user.nil?
+                 conn.block_send("auth #{@pass}")
+               else
+                 conn.block_send("userauth #{@user}:#{@pass}")
+               end
 
-      event = receive_timeout(timeout)
-      return false if event.nil?
-
-      if event.headers["reply-text"] == "+OK accepted"
-        true
-      else
+        if resp == "+OK accepted"
+          true
+        end
+      rescue WaitError
         conn.close
         false
       end

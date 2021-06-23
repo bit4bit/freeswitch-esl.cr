@@ -3,6 +3,9 @@ require "socket"
 module Freeswitch::ESL
   alias Header = Hash(String, String | Int64)
 
+  class WaitError < Exception
+  end
+
   class Event
     getter headers
     getter body
@@ -21,6 +24,7 @@ module Freeswitch::ESL
 
   class Connection
     @api_response = Channel(String).new
+    @command_response = Channel(String).new
     @hooks = [] of NamedTuple(key: String, value: String, call: (Event -> Void))
 
     @events = [] of Channel(Event)
@@ -33,7 +37,7 @@ module Freeswitch::ESL
     end
 
     def set_events(name : String)
-      send("event json #{name}")
+      block_send("event json #{name}")
     end
 
     def api(app, arg = nil)
@@ -59,6 +63,16 @@ module Freeswitch::ESL
     def send(cmd)
       Log.info { "send: #{cmd}" }
       conn.write("#{cmd}\n\n".encode("utf-8"))
+    end
+
+    def block_send(cmd, timeout : Time::Span = 5.seconds)
+      send(cmd)
+      select
+      when response = @command_response.receive
+        response
+      when timeout timeout
+        raise WaitError.new
+      end
     end
 
     private def receive_events
@@ -91,6 +105,10 @@ module Freeswitch::ESL
     private def setup_hooks
       hook("content-type", "api/response") do |event|
         @api_response.send event.body
+      end
+
+      hook("content-type", "command/reply") do |event|
+        @command_response.send event.headers["reply-text"].to_s
       end
     end
 
