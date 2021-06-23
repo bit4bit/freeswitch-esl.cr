@@ -10,7 +10,7 @@ Freeswitch Event Socket library for [Crystal language](https://github.com/crysta
    ```yaml
    dependencies:
      freeswitch-esl:
-       github: bit4bit/freeswitch-esl
+       github: bit4bit/freeswitch-esl.cr
    ```
 
 2. Run `shards install`
