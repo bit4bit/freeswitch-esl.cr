@@ -141,23 +141,22 @@ module Freeswitch::ESL
       raise "unexpected"
     end
 
-    def execute(app, arg = nil, uuid = nil, async = false)
+    def sendmsg(uuid, command, headers, body = "")
       if !uuid.nil?
         msg = "sendmsg #{uuid}\n"
       else
         msg = "sendmsg\n"
       end
 
-      msg += "call-command: execute\n"
-      msg += "execute-app-name: #{app}\n" if app
-      msg += "execute-app-arg: #{arg}\n" if arg
-      msg += "event-lock: true\n"
-      if async
-        msg += "async: true\n"
+      msg += "call-command: #{command}\n"
+      headers.each do |key, value|
+        msg += "#{key}: #{value}"
+      end
+      if body != ""
+        msg += "\n\n#{body}"
       end
       msg += "\n"
 
-      Log.info { "execute: #{msg}" }
       conn.write(msg.encode("utf-8"))
     end
 
