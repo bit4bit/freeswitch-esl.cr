@@ -59,17 +59,21 @@ module Freeswitch::ESL
     end
 
     def sendevent(event, headers : Hash(String, String | Int64) = {} of String => String | Int64, body = "")
-      content_length = body.size
-      headers = headers.clone
-      headers["content-length"] = content_length
-      headers_msg = headers.each { |k, v| "#{k}: #{v}" }
-      lines = ["sendevent #{event}"].concat(headers_msg).join("\n")
+      msg = String.build do |str|
+        content_length = body.size
 
-      if content_length == 0
-        block_send "#{lines}"
-      else
-        block_send "#{lines}\n\n#{body}"
+        str << "sendevent #{event}\n"
+        headers.each do |k, v|
+          str << "#{k}: #{v}\n"
+        end
+        if content_length > 0
+          str << "content-length: #{content_length}\n"
+          str << "\n\n"
+          str << body
+        end
       end
+
+      block_send msg
     end
 
     def connect(timeout : Time::Span)

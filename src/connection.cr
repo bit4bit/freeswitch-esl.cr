@@ -166,20 +166,23 @@ module Freeswitch::ESL
     end
 
     def sendmsg(uuid, command, headers, body = "")
-      if !uuid.nil?
-        msg = "sendmsg #{uuid}\n"
-      else
-        msg = "sendmsg\n"
-      end
+      msg = String.build do |str|
+        if !uuid.nil?
+          str << "sendmsg #{uuid}\n"
+        else
+          str << "sendmsg\n"
+        end
 
-      msg += "call-command: #{command}\n"
-      headers.each do |key, value|
-        msg += "#{key}: #{value}"
+        str << "call-command: #{command}\n"
+        headers.each do |key, value|
+          str << "#{key}: #{value}"
+        end
+
+        if body != ""
+          str << "\n\n#{body}"
+        end
+        str << "\n"
       end
-      if body != ""
-        msg += "\n\n#{body}"
-      end
-      msg += "\n"
 
       conn.write(msg.encode("utf-8"))
     end
