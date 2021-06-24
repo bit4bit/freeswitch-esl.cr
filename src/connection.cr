@@ -23,8 +23,12 @@ module Freeswitch::ESL
   end
 
   class Connection
-    @api_response = Channel(String).new
-    @command_response = Channel(String).new
+    alias ApiResponse = Channel(String)
+    alias CommandResponse = Channel(String)
+
+    @send_mutex = Mutex.new
+    @api_response = Channel(ApiResponse).new(1)
+    @command_response = Channel(CommandResponse).new(1)
     @hooks = [] of NamedTuple(key: String, value: String, call: (Event -> Void))
 
     @events = [] of Channel(Event)
@@ -46,8 +50,14 @@ module Freeswitch::ESL
         msg += " #{arg}"
       end
 
-      send(msg)
-      @api_response.receive
+      response = ApiResponse.new
+
+      @send_mutex.synchronize do
+        @api_response.send response
+        send(msg)
+      end
+
+      response.receive
     end
 
     def channel_events
@@ -66,9 +76,15 @@ module Freeswitch::ESL
     end
 
     def block_send(cmd, timeout : Time::Span = 5.seconds)
-      send(cmd)
+      responser = CommandResponse.new
+
+      @send_mutex.synchronize do
+        @command_response.send responser
+        send(cmd)
+      end
+
       select
-      when response = @command_response.receive
+      when response = responser.receive
         response
       when timeout timeout
         raise WaitError.new
@@ -104,11 +120,19 @@ module Freeswitch::ESL
 
     private def setup_hooks
       hook("content-type", "api/response") do |event|
-        @api_response.send event.body
+        select
+        when responser = @api_response.receive
+          responser.send event.body
+        else
+        end
       end
 
       hook("content-type", "command/reply") do |event|
-        @command_response.send event.headers["reply-text"].to_s
+        select
+        when responser = @command_response.receive
+          responser.send event.headers["reply-text"].to_s
+        else
+        end
       end
     end
 
