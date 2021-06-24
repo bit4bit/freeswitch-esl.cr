@@ -34,8 +34,6 @@ module Freeswitch::ESL
     @events = [] of Channel(Event)
 
     def initialize(@conn : IO)
-      @debug = File.new("/tmp/sale", "w")
-
       setup_hooks
       receive_events()
     end
@@ -144,15 +142,10 @@ module Freeswitch::ESL
       headers = Header.new
       body = ""
       conn.each_line(chomp: true) do |line|
-        @debug.puts line
-        @debug.flush
-
         if line == ""
           content_length = headers.fetch("content-length", "0").to_i
           if content_length > 0
             body = conn.read_string(content_length)
-            @debug.write body.encode("utf-8")
-            @debug.flush
           end
 
           return Event.new(headers, body)
