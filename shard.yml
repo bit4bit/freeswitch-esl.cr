@@ -8,6 +8,9 @@ targets:
   fs_cli.cr:
     main: samples/fs_cli.cr
 
+  outbound.cr:
+    main: samples/outbound.cr
+
 crystal: 1.0.0
 
 development_dependencies:
