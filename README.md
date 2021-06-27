@@ -15,6 +15,10 @@ Freeswitch Event Socket library for [Crystal language](https://github.com/crysta
 
 2. Run `shards install`
 
+## Usage
+
+see directory **samples/**.
+
 ## Usage Inbound
 
 ```crystal
@@ -38,6 +42,22 @@ spawn do
 end
 
 sleep
+```
+
+## Usage Outbound
+
+```crystal
+require "freeswitch-esl"
+
+Freeswitch::ESL::Outbound.listen("127.0.0.1", 40000) do |conn, events|
+  # first events it's channel data
+  channel_data = events.receive
+  puts channel_data.headers
+
+  resp = conn.execute "answer"
+  puts resp
+  conn.execute "hangup"
+end
 ```
 
 ## Development
