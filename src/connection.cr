@@ -89,6 +89,26 @@ module Freeswitch::ESL
       end
     end
 
+    def execute(app, arg = nil, uuid = nil, timeout = 5.seconds)
+      headers = {"execute-app-name" => app}
+      if !arg.nil?
+        headers["execute-app-arg"] = arg
+      end
+
+      responser = CommandResponse.new
+      @send_mutex.synchronize do
+        @command_response.send responser
+        sendmsg(uuid, "execute", headers, "")
+      end
+
+      select
+      when response = responser.receive
+        response
+      when timeout timeout
+        raise WaitError.new
+      end
+    end
+
     private def receive_events
       started = Channel(Bool).new
 
@@ -97,6 +117,7 @@ module Freeswitch::ESL
 
         loop do
           event = receive_event
+          next if event.nil?
 
           @hooks.each do |hook|
             if event.headers.fetch(hook[:key], nil) == hook[:value]
@@ -155,7 +176,7 @@ module Freeswitch::ESL
         headers[key.downcase] = value.strip
       end
 
-      raise "unexpected"
+      sleep 1.second
     end
 
     def sendmsg(uuid, command, headers, body = "")
@@ -168,7 +189,7 @@ module Freeswitch::ESL
 
         str << "call-command: #{command}\n"
         headers.each do |key, value|
-          str << "#{key}: #{value}"
+          str << "#{key}: #{value}\n"
         end
 
         if body != ""
@@ -177,6 +198,7 @@ module Freeswitch::ESL
         str << "\n"
       end
 
+      Log.debug { msg }
       conn.write(msg.encode("utf-8"))
     end
 
