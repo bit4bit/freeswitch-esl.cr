@@ -94,7 +94,7 @@ module Freeswitch::ESL
       if !arg.nil?
         headers["execute-app-arg"] = arg
       end
-      
+
       if event_lock
         headers["event-lock"] = "true"
       end
@@ -184,6 +184,8 @@ module Freeswitch::ESL
     end
 
     def sendmsg(uuid, command, headers, body = "")
+      # https://freeswitch.org/confluence/display/FREESWITCH/mod_event_socket#sendmsg
+      # more details
       msg = String.build do |str|
         if !uuid.nil?
           str << "sendmsg #{uuid}\n"

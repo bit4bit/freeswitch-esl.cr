@@ -2,7 +2,6 @@ require "socket"
 
 module Freeswitch::ESL
   class Outbound
-
     def initialize(@conn : Connection)
     end
 
@@ -14,7 +13,7 @@ module Freeswitch::ESL
       server = TCPServer.new(host, port)
       spawn run(server, block)
 
-      return server.local_address
+      server.local_address
     end
 
     private def self.run(server, block : (Outbound, Channel(Event)) -> _)
@@ -31,7 +30,7 @@ module Freeswitch::ESL
 
     private def self.handle_connection(socket, block)
       conn = Connection.new(socket)
-      events = conn.channel_events      
+      events = conn.channel_events
 
       # handshake
       conn.send("connect")

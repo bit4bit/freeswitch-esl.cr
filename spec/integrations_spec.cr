@@ -3,10 +3,9 @@ require "socket"
 
 describe Freeswitch::ESL do
   describe Freeswitch::ESL::Outbound do
-
     it "handshake with channel data" do
       receive_events = Channel(Freeswitch::ESL::Event).new
-      conn = Freeswitch::ESL::Outbound.listen("localhost", 0) do |conn, events|
+      conn = Freeswitch::ESL::Outbound.listen("localhost", 0) do |_conn, events|
         # first event it's channel data
         channel_data = events.receive
         receive_events.send channel_data
@@ -122,10 +121,10 @@ Control: full
 )
       client.write(channel_data.encode("utf-8"))
       select
-    when event = receive_events.receive
-    when timeout 1.second
-      raise "timeout"
-    end
+      when event = receive_events.receive
+      when timeout 1.second
+        raise "timeout"
+      end
       event.headers["variable_socket_host"] == "127.0.0.1"
       client.close
     end

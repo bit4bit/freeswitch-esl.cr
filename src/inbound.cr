@@ -5,7 +5,6 @@ require "json"
 module Freeswitch::ESL
   class Inbound
     @conn : Connection?
-    @events = Channel(Event).new
 
     def initialize(@host : String, @port : Int32, @pass : String, @user : String? = nil)
     end
@@ -59,6 +58,8 @@ module Freeswitch::ESL
     end
 
     def sendevent(event, headers : Hash(String, String | Int64) = {} of String => String | Int64, body = "")
+      # https://freeswitch.org/confluence/display/FREESWITCH/mod_event_socket#sendevent
+      # more details
       msg = String.build do |str|
         content_length = body.size
 
@@ -76,25 +77,22 @@ module Freeswitch::ESL
       block_send msg
     end
 
-    def connect(timeout : Time::Span)
+    def connect(timeout : Time::Span = 5.seconds)
       socket = TCPSocket.new(@host, @port, timeout)
       @conn = Connection.new(socket)
+      events = Channel(Event).new
 
-      spawn do
-        events = conn.channel_events
-        loop do
-          @events.send events.receive
-        end
-      end
-
-      event = receive_timeout(timeout)
+      # wait for first event sended by freeswitch
+      event = receive_timeout(events, timeout)
       return false if event.nil?
 
+      # we expect a auth request
       if event.headers["content-type"] != "auth/request"
         conn.close
         return false
       end
 
+      # authenticate
       begin
         resp = if @user.nil?
                  conn.block_send("auth #{@pass}")
@@ -123,9 +121,9 @@ module Freeswitch::ESL
       @conn.as(Connection)
     end
 
-    private def receive_timeout(timeout : Time::Span) : Event?
+    private def receive_timeout(events, timeout : Time::Span) : Event?
       select
-      when event = @events.receive
+      when event = events.receive
         event
       when timeout timeout
         return nil
