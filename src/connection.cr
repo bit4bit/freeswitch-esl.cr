@@ -89,10 +89,14 @@ module Freeswitch::ESL
       end
     end
 
-    def execute(app, arg = nil, uuid = nil, timeout = 5.seconds)
+    def execute(app, arg = nil, uuid = nil, event_lock = false, timeout = 5.seconds)
       headers = {"execute-app-name" => app}
       if !arg.nil?
         headers["execute-app-arg"] = arg
+      end
+      
+      if event_lock
+        headers["event-lock"] = "true"
       end
 
       responser = CommandResponse.new

@@ -6,8 +6,8 @@ module Freeswitch::ESL
     def initialize(@conn : Connection)
     end
 
-    def execute(app, arg = nil)
-      @conn.execute(app, arg)
+    def execute(app, arg = nil, event_lock = false)
+      @conn.execute(app, arg, event_lock: event_lock)
     end
 
     def self.listen(host : String, port : Int32, &block : (Outbound, Channel(Event)) -> _)
