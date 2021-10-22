@@ -64,6 +64,11 @@ module Freeswitch::ESL
       channel
     end
 
+    def remove_channel_event(channel)
+      @events.delete(channel)
+      channel.close
+    end
+
     def close
       conn.close
     end

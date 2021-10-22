@@ -80,11 +80,12 @@ module Freeswitch::ESL
     def connect(timeout : Time::Span = 5.seconds)
       socket = TCPSocket.new(@host, @port, timeout)
       @conn = Connection.new(socket)
-      events = Channel(Event).new
+      tmp_events = conn.channel_events
 
       # wait for first event sended by freeswitch
-      event = receive_timeout(events, timeout)
+      event = receive_timeout(tmp_events, timeout)
       return false if event.nil?
+      conn.remove_channel_event(tmp_events)
 
       # we expect a auth request
       if event.headers["content-type"] != "auth/request"
