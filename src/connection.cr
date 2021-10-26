@@ -1,7 +1,7 @@
 require "socket"
 
 module Freeswitch::ESL
-  alias Header = Hash(String, String | Int64)
+  alias Header = Hash(String, String | Int64 | Array(String | Int64))
 
   class WaitError < Exception
   end
@@ -173,7 +173,7 @@ module Freeswitch::ESL
       body = ""
       conn.each_line(chomp: true) do |line|
         if line == ""
-          content_length = headers.fetch("content-length", "0").to_i
+          content_length = headers.fetch("content-length", "0").as(String).to_i
           if content_length > 0
             body = conn.read_string(content_length)
           end
