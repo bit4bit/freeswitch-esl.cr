@@ -1,4 +1,5 @@
 require "../src/freeswitch-esl.cr"
+require "log"
 
 USAGE = "usage: outbound <host> <port>"
 raise USAGE if ARGV.size < 2

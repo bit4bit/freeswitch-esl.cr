@@ -1,5 +1,4 @@
 require "socket"
-require "log"
 require "json"
 
 module Freeswitch::ESL

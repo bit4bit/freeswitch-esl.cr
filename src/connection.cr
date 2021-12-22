@@ -91,7 +91,6 @@ module Freeswitch::ESL
     end
 
     def send(cmd)
-      Log.info { "send: #{cmd}" }
       conn.write("#{cmd}\n\n".encode("utf-8"))
     end
 
