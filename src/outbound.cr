@@ -38,10 +38,8 @@ module Freeswitch::ESL
       # run user application
       block.call(new(conn), events)
 
-      # close connection
-      # TODO(bit4bit) graceful close?
-      # conn.close
-      # socket.close
+      # close
+      conn.close
     end
   end
 end

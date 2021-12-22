@@ -1,4 +1,5 @@
 require "socket"
+require "uri"
 
 module Freeswitch::ESL
   alias Header = Hash(String, String | Int64 | Array(String | Int64))
@@ -15,7 +16,17 @@ module Freeswitch::ESL
 
     def message : Header
       if @headers["content-type"] == "text/event-json"
-        return Header.from_json(@body)
+        return Header.from_json(@body).transform_values do |value|
+          if value.is_a?(String)
+            begin
+              URI.decode(value)
+            rescue
+              value
+            end
+          else
+            value
+          end
+        end
       end
 
       Header.new
@@ -30,7 +41,7 @@ module Freeswitch::ESL
     @api_response = Channel(ApiResponse).new(1)
     @command_response = Channel(CommandResponse).new(1)
     @hooks = [] of NamedTuple(key: String, value: String, call: (Event -> Void))
-
+    @running = Channel(Bool).new
     @events = [] of Channel(Event)
 
     def initialize(@conn : IO)
@@ -70,7 +81,13 @@ module Freeswitch::ESL
     end
 
     def close
-      conn.close
+      @running.send(false)
+      select
+      when @running.receive
+        conn.close
+      when timeout 5.seconds
+        raise WaitError.new
+      end
     end
 
     def send(cmd)
@@ -125,19 +142,25 @@ module Freeswitch::ESL
         started.send true
 
         loop do
-          event = receive_event
-          next if event.nil?
+          select
+          when @running.receive
+            @running.send(false)
+            break
+          else
+            event = receive_event
+            next if event.nil?
 
-          @hooks.each do |hook|
-            if event.headers.fetch(hook[:key], nil) == hook[:value]
-              hook[:call].call(event)
+            @hooks.each do |hook|
+              if event.headers.fetch(hook[:key], nil) == hook[:value]
+                hook[:call].call(event)
+              end
             end
-          end
 
-          @events.each do |channel|
-            select
-            when channel.send event
-            else
+            @events.each do |channel|
+              select
+              when channel.send event
+              else
+              end
             end
           end
         end

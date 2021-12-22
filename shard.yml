@@ -11,11 +11,11 @@ targets:
   outbound.cr:
     main: samples/outbound.cr
 
-crystal: 1.0.0
+crystal: 1.2.1
 
 development_dependencies:
   ameba:
     github: crystal-ameba/ameba
-    version: ~> 0.13.0
+    version: ~> 0.14.3
 
 license: MIT

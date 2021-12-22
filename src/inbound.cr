@@ -55,6 +55,7 @@ module Freeswitch::ESL
 
     def exit
       conn.block_send("exit")
+      conn.close
     end
 
     def sendevent(event, headers : Hash(String, String | Int64) = {} of String => String | Int64, body = "")
