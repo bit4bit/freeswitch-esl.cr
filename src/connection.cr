@@ -56,7 +56,7 @@ module Freeswitch::ESL
       block_send("event json #{name}")
     end
 
-    def api(app, arg = nil)
+    def api(app, arg = nil, timeout : Time::Span = 5.seconds)
       msg = "api #{app}"
       if arg
         msg += " #{arg}"
@@ -69,7 +69,12 @@ module Freeswitch::ESL
         send(msg)
       end
 
-      response.receive
+      select
+      when x = response.receive
+        x
+      when timeout timeout
+        raise WaitError.new
+      end
     end
 
     def channel_events
