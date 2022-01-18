@@ -18,13 +18,8 @@ channel = conn.events
 
 puts conn.api "uptime"
 
-spawn do
-  loop do
-    event = channel.receive
-    puts event.headers
-    puts event.message
-  end
+loop do
+  event = channel.receive
+  puts event.headers
+  puts event.message
 end
-
-
-sleep

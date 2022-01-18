@@ -7,6 +7,9 @@ module Freeswitch::ESL
   class WaitError < Exception
   end
 
+  class ReadEventError < Exception
+  end
+
   class Event
     getter headers
     getter body
@@ -90,6 +93,13 @@ module Freeswitch::ESL
       end
     end
 
+    def force_close
+      @events.each do |ch|
+        ch.close
+      end
+      conn.close
+    end
+
     def send(cmd)
       conn.write("#{cmd}\n\n".encode("utf-8"))
     end
@@ -137,7 +147,7 @@ module Freeswitch::ESL
     private def receive_events
       started = Channel(Bool).new
 
-      spawn do
+      spawn(name: "receive_events") do
         started.send true
 
         loop do
@@ -147,7 +157,9 @@ module Freeswitch::ESL
             break
           else
             event = receive_event
-            next if event.nil?
+            if event.nil?
+              raise ReadEventError.new
+            end
 
             @hooks.each do |hook|
               if event.headers.fetch(hook[:key], nil) == hook[:value]
@@ -163,6 +175,10 @@ module Freeswitch::ESL
             end
           end
         end
+      rescue ex : Exception
+        raise ex
+      ensure
+        force_close()
       end
 
       started.receive
