@@ -1,5 +1,7 @@
 # freeswitch-esl
 
+Production Ready.
+
 Freeswitch Event Socket library for [Crystal language](https://github.com/crystal-lang/crystal).
 
 
