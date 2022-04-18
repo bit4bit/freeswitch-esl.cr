@@ -78,7 +78,8 @@ module Freeswitch::ESL
     end
 
     def channel_events
-      channel = Channel(Event).new
+      # correct buffer?
+      channel = Channel(Event).new(1024*16)
       @events << channel
       channel
     end
