@@ -77,9 +77,9 @@ module Freeswitch::ESL
       block_send msg
     end
 
-    def connect(timeout : Time::Span = 5.seconds)
+    def connect(timeout : Time::Span = 5.seconds, spawn_receiver = true)
       socket = TCPSocket.new(@host, @port, timeout)
-      @conn = Connection.new(socket)
+      @conn = Connection.new(socket, spawn_receiver: spawn_receiver)
       tmp_events = conn.channel_events
 
       # wait for first event sended by freeswitch
