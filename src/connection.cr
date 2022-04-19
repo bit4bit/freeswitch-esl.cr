@@ -44,16 +44,42 @@ module Freeswitch::ESL
     @api_response = Channel(ApiResponse).new(1)
     @command_response = Channel(CommandResponse).new(1)
     @hooks = [] of NamedTuple(key: String, value: String, call: (Event -> Void))
-    @running = Channel(Bool).new
+    @running = true
     @events = [] of Channel(Event)
 
-    def initialize(@conn : IO)
+    def initialize(@conn : IO, spawn_receiver = true)
       setup_hooks
-      receive_events()
+
+      if spawn_receiver
+        receive_events()
+      end
     end
 
     def set_events(name : String)
       block_send("event json #{name}")
+    end
+
+    def run
+      loop do
+        break if !@running
+        event = receive_event
+        if event.nil?
+          raise ReadEventError.new
+        end
+
+        @hooks.each do |hook|
+          if event.headers.fetch(hook[:key], nil) == hook[:value]
+            hook[:call].call(event)
+          end
+        end
+
+        @events.each do |channel|
+          select
+          when channel.send event
+          else
+          end
+        end
+      end
     end
 
     def api(app, arg = nil, timeout : Time::Span = 5.seconds)
@@ -90,13 +116,9 @@ module Freeswitch::ESL
     end
 
     def close
-      @running.send(false)
-      select
-      when @running.receive
-        conn.close
-      when timeout 5.seconds
-        raise WaitError.new
-      end
+      @running = true
+      sleep 1.seconds
+      conn.close
     end
 
     def force_close
@@ -155,32 +177,7 @@ module Freeswitch::ESL
 
       spawn(name: "receive_events") do
         started.send true
-
-        loop do
-          select
-          when @running.receive
-            @running.send(false)
-            break
-          else
-            event = receive_event
-            if event.nil?
-              raise ReadEventError.new
-            end
-
-            @hooks.each do |hook|
-              if event.headers.fetch(hook[:key], nil) == hook[:value]
-                hook[:call].call(event)
-              end
-            end
-
-            @events.each do |channel|
-              select
-              when channel.send event
-              else
-              end
-            end
-          end
-        end
+        run()
       rescue ex : Exception
         raise ex
       ensure
