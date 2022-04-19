@@ -3,9 +3,14 @@ require "json"
 
 module Freeswitch::ESL
   class Inbound
-    @conn : Connection?
+    @conn : Connection? = nil
 
     def initialize(@host : String, @port : Int32, @pass : String, @user : String? = nil)
+    end
+
+    def initialize(@conn : Connection, @pass : String, @user : String? = nil)
+      @host = ""
+      @port = 0
     end
 
     def api(app, arg = nil)
@@ -77,9 +82,12 @@ module Freeswitch::ESL
       block_send msg
     end
 
-    def connect(timeout : Time::Span = 5.seconds, spawn_receiver = true)
-      socket = TCPSocket.new(@host, @port, timeout)
-      @conn = Connection.new(socket, spawn_receiver: spawn_receiver)
+    def connect(timeout : Time::Span = 5.seconds)
+      if @conn.nil?
+        socket = TCPSocket.new(@host, @port, timeout)
+        @conn = Connection.new(socket)
+      end
+
       tmp_events = conn.channel_events
 
       # wait for first event sended by freeswitch
