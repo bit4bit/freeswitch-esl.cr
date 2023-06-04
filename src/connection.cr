@@ -95,12 +95,7 @@ module Freeswitch::ESL
         send(msg)
       end
 
-      select
-      when x = response.receive
-        x
-      when timeout timeout
-        raise WaitError.new
-      end
+      wait_for(response, timeout)
     end
 
     def channel_events
@@ -140,12 +135,7 @@ module Freeswitch::ESL
         send(cmd)
       end
 
-      select
-      when response = responser.receive
-        response
-      when timeout timeout
-        raise WaitError.new
-      end
+      wait_for(responser, timeout)
     end
 
     def execute(app, arg = nil, uuid = nil, event_lock = false, timeout = 5.seconds)
@@ -164,12 +154,7 @@ module Freeswitch::ESL
         sendmsg(uuid, "execute", headers, "")
       end
 
-      select
-      when response = responser.receive
-        response
-      when timeout timeout
-        raise WaitError.new
-      end
+      wait_for(responser, timeout)
     end
 
     private def receive_events
@@ -259,6 +244,15 @@ module Freeswitch::ESL
         raise "connection not started"
       end
       @conn.as(IO)
+    end
+
+    private def wait_for(ch, timeout)
+      select
+      when response = ch.receive
+        response
+      when timeout timeout
+        raise WaitError.new
+      end
     end
   end
 end
