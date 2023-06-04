@@ -2,6 +2,7 @@ require "socket"
 require "json"
 
 module Freeswitch::ESL
+  # Public
   class Inbound
     @conn : Connection? = nil
 

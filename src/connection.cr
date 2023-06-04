@@ -36,6 +36,7 @@ module Freeswitch::ESL
     end
   end
 
+  # Internal
   class Connection
     alias ApiResponse = Channel(String)
     alias CommandResponse = Channel(String)

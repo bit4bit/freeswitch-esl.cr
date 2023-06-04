@@ -1,6 +1,7 @@
 require "socket"
 
 module Freeswitch::ESL
+  # Public
   class Outbound
     def initialize(@conn : Connection)
     end
