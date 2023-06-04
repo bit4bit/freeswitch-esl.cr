@@ -13,7 +13,8 @@ describe Freeswitch::ESL do
 
       client = TCPSocket.new(conn.address, conn.port)
       response = client.gets
-      response.should eq "connect"
+      # when Freeswitch connects expect the word connect from the server
+      response.should eq("connect"), "client must send connect"
       client.gets
       channel_data = %Q(Channel-Username: 1001
 Channel-Dialplan: XML
@@ -119,13 +120,11 @@ Socket-Mode: async
 Control: full
 
 )
+      # after 'connect' freeswitch send channel data
       client.write(channel_data.encode("utf-8"))
-      select
-      when event = receive_events.receive
-      when timeout 1.second
-        raise "timeout"
-      end
-      event.headers["variable_socket_host"] == "127.0.0.1"
+
+      event = wait_for(receive_events)
+      event.headers["variable_socket_host"].should eq "127.0.0.1"
       client.close
     end
   end
