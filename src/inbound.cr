@@ -2,7 +2,7 @@ require "socket"
 require "json"
 
 module Freeswitch::ESL
-  # Public
+  # This class allows do administrative task on a FreeSWITCH
   class Inbound
     @conn : Connection? = nil
 
@@ -14,18 +14,23 @@ module Freeswitch::ESL
       @port = 0
     end
 
+    # allows execution of https://developer.signalwire.com/freeswitch/FreeSWITCH-Explained/Modules/mod_commands_1966741
     def api(app, arg = nil)
       conn.api(app, arg)
     end
 
+    # subcribe to events https://developer.signalwire.com/freeswitch/FreeSWITCH-Explained/Introduction/Event-System/Event-List_7143557/#nat
     def set_events(name : String)
       conn.set_events(name)
     end
 
+    # Tells FreeSWITCH not to close the socket connection when a channel hangs up.
+    # Instead, it keeps the socket connection open until the last event related to the channel has been received by the socket client.
     def linger
       conn.block_send("linger")
     end
 
+    # Disable socket lingering. See linger above.
     def nolinger
       conn.block_send("nolinger")
     end
@@ -34,35 +39,45 @@ module Freeswitch::ESL
       conn.block_send("myevents json #{uuid}")
     end
 
+    # Specify event types to listen for
     def filter(key, value = "")
       conn.block_send("filter #{key} #{value}")
     end
 
+    # Specify the events which you want to revoke the filter. 
+    # filter delete can be used when some filters are applied wrongly or when there is no use of the filter.
     def filter_delete(key, value = "")
       conn.block_send("filter delete #{key} #{value}")
     end
 
+    # change level log 0 - CONSOLE 1 - ALERT 2 - CRIT 3 - ERR 4 - WARNING 5 - NOTICE 6 - INFO 7 - DEBUG
     def log(level)
       conn.block_send("log #{level}")
     end
 
+    # Disable log output previously enabled by the log command
     def nolog
       conn.block_send("nolog")
     end
 
+    # Suppress the specified type of event. Useful when you want to allow 'event all' followed by 'nixevent <some_event>' to see all but 1 type of event.
     def nixevent(events : String)
       conn.block_send("nixevent #{events}")
     end
 
+    # Disable all events that were previously enabled with event.
     def noevents
       conn.block_send("noevents")
     end
 
+    # Close the socket connection.
     def exit
       conn.block_send("exit")
       conn.close
     end
 
+    # Send an event into the event system.
+    # see https://developer.signalwire.com/freeswitch/FreeSWITCH-Explained/Modules/mod_event_socket_1048924/#38-sendevent
     def sendevent(event, headers : Hash(String, String | Int64) = {} of String => String | Int64, body = "")
       # https://freeswitch.org/confluence/display/FREESWITCH/mod_event_socket#sendevent
       # more details
@@ -83,6 +98,7 @@ module Freeswitch::ESL
       block_send msg
     end
 
+    # Login to FreeSWITCH and starts grab events.
     def connect(timeout : Time::Span = 5.seconds)
       if @conn.nil?
         socket = TCPSocket.new(@host, @port, timeout)
@@ -119,6 +135,7 @@ module Freeswitch::ESL
       end
     end
 
+    # Allows to receive events of FreeSWITCH see `events`
     def events
       conn.channel_events
     end
