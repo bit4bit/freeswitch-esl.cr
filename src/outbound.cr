@@ -3,9 +3,6 @@ require "socket"
 module Freeswitch::ESL
   # Public
   class Outbound
-    def initialize(@conn : Connection)
-    end
-
     def execute(app, arg = nil, event_lock = false)
       @conn.execute(app, arg, event_lock: event_lock)
     end
@@ -15,6 +12,9 @@ module Freeswitch::ESL
       spawn run(server, block)
 
       server.local_address
+    end
+
+    private def initialize(@conn : Connection)
     end
 
     private def self.run(server, block : (Outbound, Channel(Event)) -> _)
