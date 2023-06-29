@@ -1,17 +1,19 @@
 require "socket"
 
 module Freeswitch::ESL
-  # Public
+  # Handle connections from FreeSWITCH `socket` application
+  # mainly use for taking control of calls.
   class Outbound
-    def execute(app, arg = nil, event_lock = false)
-      @conn.execute(app, arg, event_lock: event_lock)
-    end
-
     def self.listen(host : String, port : Int32, &block : (Outbound, Channel(Event)) -> _)
       server = TCPServer.new(host, port)
       spawn run(server, block)
 
       server.local_address
+    end
+
+    # execute applications in the handled call
+    def execute(app, arg = nil, event_lock = false)
+      @conn.execute(app, arg, event_lock: event_lock)
     end
 
     private def initialize(@conn : Connection)
