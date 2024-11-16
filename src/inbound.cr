@@ -95,7 +95,7 @@ module Freeswitch::ESL
         end
       end
 
-      block_send msg
+      conn.block_send msg
     end
 
     # Login to FreeSWITCH and starts grab events.
