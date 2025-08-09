@@ -140,7 +140,8 @@ module Freeswitch::ESL
       conn.channel_events
     end
 
-    private def conn
+    # Raw connection
+    def conn
       if @conn.nil?
         raise "connection not started"
       end
